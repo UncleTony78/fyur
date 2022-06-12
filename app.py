@@ -5,6 +5,7 @@
 from cmath import phase
 from email.policy import default
 import imp
+import sys
 import json
 from os import abort
 import re
@@ -608,49 +609,45 @@ def edit_artist_submission(artist_id):
   # artist record with ID <artist_id> using the new attributes
   form = ArtistForm()
 
-  name = form.name.data,
-  city = form.city.data,
-  state = form.state.data,
-  phone = form.phone.data,
-  genres = form.genres.data,
-  website = form.website_link.data,
-  seeking_venue = form.seeking_venue.data,
-  image_link = form.image_link.data,
-  seeking_description = form.seeking_description.data,
-  facebook_link = form.facebook_link.data
+ # name = form.name.data,
+ # city = form.city.data,
+ # state = form.state.data,
+ # phone = form.phone.data,
+ # genres = form.genres.data,
+ # website = form.website_link.data,
+ # seeking_venue = form.seeking_venue.data,
+ # image_link = form.image_link.data,
+ #seeking_description = form.seeking_description.data,
+ #facebook_link = form.facebook_link.data
 
-  if not form.validate():
-    flash(form.errors)
-    return redirect(url_for('edit_artist_submission', artist_id=artist_id))
-  else:
-    update_error = False
-
+  if form.validate():
     try:
       artist = Artist.query.get(artist_id)
-      artist.name = name
-      artist.city = city
-      artist.state = state
-      artist.phone = phone
-      artist.genres = genres
-      artist.website = website 
-      artist.seeking_venue = seeking_venue
-      artist.image_link = image_link
-      artist.seeking_description = seeking_description
-      artist.facebook_link = facebook_link
+      artist.name = form.name.data
+      artist.city = form.city.data
+      artist.state = form.state.data
+      artist.phone = form.phone.data
+      artist.genres = form.genres.data
+      artist.website = form.website.data 
+      artist.seeking_venue = form.seeking_venue.data
+      artist.image_link = form.image_link.data
+      artist.seeking_description = form.seeking_description.data
+      artist.facebook_link = form.facebook_link.data
+      db.session.add(artist)
       db.session.commit()
-    except Exception as e:
-      update_error = True
-      print(f' Exception "{e}" in edit_artist_submission()')
+      flash('Artist' +request.form['name'] + 'has been successfully updated') 
+    except:
       db.session.rollback()
+      print(sys.exc_info())
+      flash('There was an error, artist could not be updated')
+
     finally: 
-      db.session.close()
-    if not update_error:
-      flash('Artist' +request.form['name'] + 'has been successfully updated')  
-      return redirect(url_for('show_artist', artist_id=artist_id))
-    else: 
-        flash('There was an error artist' +name+ 'could not be updated')  
-        print('There was an error in edit_artist_submission()')
-        abort(500)
+      db.session.close()  
+  else: 
+      flash('There was an error artist could not be updated')  
+      print(form.errors)
+      #abort(500)
+  return redirect(url_for('show_artist', artist_id=artist_id))    
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
@@ -697,49 +694,34 @@ def edit_venue_submission(venue_id):
   # venue record with ID <venue_id> using the new attributes
   form = VenueForm()
 
-  name = form.name.data,
-  city = form.city.data,
-  state = form.state.data,
-  phone = form.phone.data,
-  genres = form.genres.data,
-  website = form.website_link.data,
-  seeking_talent = form.seeking_talent.data,
-  image_link = form.image_link.data,
-  seeking_description = form.seeking_description.data,
-  facebook_link = form.facebook_link.data
+ 
 
-  if not form.validate():
-    flash(form.errors)
-    return redirect(url_for('edit_venue_submission', venue_id=venue_id))
-  else:
-    update_error = False
-
+  if form.validate():
     try:
       venue = Venue.query.get(venue_id)
-      venue.name = name
-      venue.city = city
-      venue.state = state
-      venue.phone = phone
-      venue.genres = genres
-      venue.website = website 
-      venue.seeking_talent = seeking_talent
-      venue.image_link = image_link
-      venue.seeking_description = seeking_description
-      venue.facebook_link = facebook_link
+      venue.name = form.name.data,
+      venue.city = form.city.data,
+      venue.state = form.state.data,
+      venue.phone = form.phone.data,
+      venue.genres = form.genres.data,
+      venue.website = form.website_link.data,
+      venue.seeking_talent = form.seeking_talent.data,
+      venue.image_link = form.image_link.data,
+      venue.seeking_description = form.seeking_description.data,
+      venue.facebook_link = form.facebook_link.data
+      db.session.add(venue)
       db.session.commit()
-    except Exception as e:
-      update_error = True
-      print(f' Exception "{e}" in edit_venue_submission()')
+      flash('Venue' +request.form['name'] + 'has been successfully updated') 
+    except Exception:
       db.session.rollback()
+      print(sys.exc_info())
+      flash('There was an error, venue could not be updated') 
     finally: 
       db.session.close()
-    if not update_error:
-      flash('Venue' +request.form['name'] + 'has been successfully updated')  
-      return redirect(url_for('show_venue', venue_id=venue_id))
-    else: 
-        flash('There was an error, venue' +name+ 'could not be updated')  
-        print('There was an error in edit_venue_submission()')
-        abort(500)
+  else: 
+        print(form.errors)
+        #abort(500)
+  return redirect(url_for('show_venue', venue_id=venue_id))
 #  Create Artist
 #  ----------------------------------------------------------------
 
@@ -812,7 +794,6 @@ def shows():
     shows = Show.query.all()
     
     for show in shows:
-        # Can reference show.artist, show.venue
         data.append({
             "venue_id": show.venue_id,
            # "venue_name": show.venue.name,
